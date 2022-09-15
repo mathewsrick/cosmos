@@ -15,7 +15,7 @@ module.exports = require('./lib/cosmos.js');
   
     currency.mask = function (value, decimals = 0, separators = null) {
         let _decimals = decimals > 0 ? parseInt(decimals, 0) : 2;
-        separators = separators || [',', ',', '.'];
+        separators = separators || ['.', '.', ','];
 
         //se dividen los decimales (si los tiene), de la parte entera
         value = value.toString().split(separators[2]);
@@ -71,6 +71,48 @@ module.exports = require('./lib/cosmos.js');
         }
     
         return mask;
+    };
+
+    currency.unmask = function(value, withDecimals = true) {
+        let unmaskedString = value.toString();
+        let count = unmaskedString.length;
+        let separators = [];
+        let unmask = null;
+
+        // looping reverse any character of the amount to get the separators
+        for (let index = count-1; index > 0; index--) {
+            if(isNaN(unmaskedString[index])) {
+                if(unmaskedString[index] === '.' || unmaskedString[index] === ',') {
+                    separators.push(unmaskedString[index]);
+                }
+            }                
+        }
+        
+        // avoid to do this if the amount is a integer with no separators
+        if(separators.length > 0) {
+            let isDistintc = false;
+            // checking if the first separator who is the last one is different 
+            // to another to preserve it as separator for decimals
+            for (let index = 1; index < separators.length; index++) {
+                if(separators[0] != separators[index]) {
+                    isDistintc = true;
+                }        
+            }
+            
+            if(isDistintc) {
+                let amounts = value.split(separators[0]);
+                let decimals = amounts[1];
+
+                unmask = amounts[0].split(separators[1]).join('');                
+                unmask = [unmask,decimals].join(separators[0]);
+            } else {
+                unmask = value.split(separators[0]).join('');
+            }
+        } else {
+            unmask = value;
+        }
+
+        return withDecimals? unmask : parseInt(unmask);
     };
 }());
 },{}]},{},[1])(1)
